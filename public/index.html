@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suffolk County Legislature — 2026 Resolution Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0b1e3d;--navy2:#112550;--gold:#d4a843;--gold2:#f0c96a;--cream:#f6f2ea;--cream2:#ede8dc;--text:#1a1a2a;--text2:#3b4861;--text3:#7080a0;--border:rgba(11,30,61,.1);--border2:rgba(11,30,61,.18);--yes:#1a6644;--yes-bg:#e2f5ec;--no:#8b1a1a;--no-bg:#fae8e8;--tab:#5a4a00;--tab-bg:#fdf5d0;--na-bg:#eef0f4;--na:#556080;--dem:#1a4d99;--dem-bg:#e3ecf8;--rep:#991a1a;--rep-bg:#f8e3e3;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Source Sans 3',sans-serif;background:var(--cream);color:var(--text);font-size:14px}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:inherit}
+.hdr{background:var(--navy);border-bottom:3px solid var(--gold);position:sticky;top:0;z-index:300}
+.hdr-inner{max-width:1400px;margin:0 auto;padding:0 1.5rem;height:56px;display:flex;align-items:center;gap:1rem}
+.brand{flex-shrink:0}
+.brand-name{font-size:15px;font-weight:600;color:#fff}
+.brand-sub{font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.08em;text-transform:uppercase}
+.tabs{display:flex;gap:2px;margin-left:1.5rem;flex:1}
+.htab{height:56px;padding:0 16px;background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-3px;color:rgba(255,255,255,.45);font-size:13px;font-weight:500;transition:all .15s;font-family:inherit}
+.htab:hover{color:rgba(255,255,255,.8)}
+.htab.active{color:var(--gold2);border-bottom-color:var(--gold)}
+.live-area{margin-left:auto;font-size:11px;color:rgba(255,255,255,.35);display:flex;align-items:center;gap:6px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#4ade80;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.panel{display:none}.panel.active{display:block}
+.hero{background:var(--navy2);padding:1.75rem 1.5rem 1.5rem;border-bottom:1px solid rgba(212,168,67,.2)}
+.hero-inner{max-width:1400px;margin:0 auto}
+.hero h2{font-size:22px;font-weight:500;color:#fff;margin-bottom:4px}
+.hero p{font-size:13px;color:rgba(255,255,255,.4);margin-bottom:1.25rem}
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+@media(max-width:900px){.stats{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:580px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:rgba(255,255,255,.05);border:1px solid rgba(212,168,67,.18);border-radius:9px;padding:11px 13px;cursor:pointer;transition:all .15s}
+.stat:hover,.stat.on{background:rgba(212,168,67,.12);border-color:var(--gold)}
+.stat-lbl{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.38);margin-bottom:4px;display:flex;align-items:center;gap:5px}
+.sdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.stat-n{font-size:26px;font-weight:300;color:#fff;line-height:1}
+.stat-note{font-size:10px;color:rgba(255,255,255,.22);margin-top:2px}
+.toolbar{max-width:1400px;margin:0 auto;padding:.9rem 1.5rem;display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--border)}
+.sbox{flex:1;min-width:220px;position:relative}
+.sbox svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--text3);pointer-events:none}
+#searchInput{width:100%;height:36px;padding:0 10px 0 32px;border:1.5px solid var(--border2);border-radius:8px;background:#fff;font-family:inherit;font-size:13px;color:var(--text);outline:none}
+#searchInput:focus{border-color:var(--navy)}
+.fbg{display:flex;gap:6px;flex-wrap:wrap}
+.fb{height:30px;padding:0 11px;border-radius:6px;border:1.5px solid var(--border2);background:#fff;font-size:12px;color:var(--text2);display:flex;align-items:center;gap:4px;transition:all .12s;white-space:nowrap;font-family:inherit}
+.fb:hover{border-color:var(--navy)}
+.fb.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.rbar{max-width:1400px;margin:0 auto;padding:.5rem 1.5rem;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text3)}
+.rbar a{color:#1655a0}.rbar a:hover{text-decoration:underline}
+.tbl-wrap{max-width:1400px;margin:0 auto 3rem;padding:0 1.5rem}
+.tbl-card{background:#fff;border-radius:10px;border:1px solid var(--border);overflow:hidden}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+thead th{background:var(--navy);padding:9px 12px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.6);white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--cream2);cursor:pointer;transition:background .1s}
+tbody tr:hover{background:#f8f5f0}
+tbody td{padding:9px 12px;vertical-align:middle;overflow:hidden;text-overflow:ellipsis}
+.sep-row td{background:var(--cream);padding:5px 12px;font-size:10px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--text3)}
+.mono{font-family:'JetBrains Mono',monospace;font-size:11px;color:#1a3468;white-space:nowrap}
+.badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
+.b-lot{background:#e3eefa;color:#1655a0}.b-pm{background:#f0e8fc;color:#6033aa}.b-ll{background:#fbeedd;color:#8a4200}
+.s-adopted{background:var(--yes-bg);color:var(--yes)}.s-tabled{background:var(--tab-bg);color:var(--tab)}
+.s-failed{background:var(--no-bg);color:var(--no)}.s-pending{background:var(--na-bg);color:var(--na)}.s-set{background:#e8edf8;color:#334a88}
+.vote-chip{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;color:var(--yes)}
+.pdf-btn{display:inline-flex;align-items:center;padding:3px 8px;background:var(--cream);border:1px solid var(--border2);border-radius:5px;font-size:11px;color:var(--text2)}
+.pdf-btn:hover{background:var(--navy);color:#fff}
+.empty{text-align:center;padding:3rem;color:var(--text3);font-size:13px}
+.loading{text-align:center;padding:3rem;color:var(--text3)}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(8,18,40,.58);z-index:500;align-items:flex-start;justify-content:center;padding:3rem 1rem 1rem;overflow-y:auto}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:14px;max-width:780px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal-hdr{background:var(--navy);padding:1.2rem 1.5rem;border-radius:14px 14px 0 0;display:flex;gap:1rem;align-items:flex-start}
+.modal-hdr-text{flex:1}
+.mnum{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold2);letter-spacing:.07em;margin-bottom:4px}
+.modal-hdr h3{font-size:15px;font-weight:500;color:#fff;line-height:1.45}
+.modal-close{background:rgba(255,255,255,.12);border:none;color:#fff;width:28px;height:28px;border-radius:50%;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.modal-close:hover{background:rgba(255,255,255,.22)}
+.modal-body{padding:1.5rem}
+.flow{display:flex;align-items:center;gap:7px;flex-wrap:wrap;background:var(--cream);border-radius:8px;padding:9px 13px;margin-bottom:1.1rem;font-size:12px}
+.flow-done{color:var(--yes);font-weight:500}.flow-pend{color:var(--text3);font-weight:500}.flow-arr{color:var(--text3);font-size:10px}
+.mmeta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:1.1rem}
+.mi{background:var(--cream);border-radius:7px;padding:9px 11px}
+.mi-lbl{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);margin-bottom:2px}
+.mi-val{font-size:13px;font-weight:500}
+.mdesc{font-size:13px;line-height:1.65;color:var(--text2);background:var(--cream);border-radius:8px;padding:.9rem;margin-bottom:1.1rem}
+.vhdr{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:.65rem}
+.vsumm{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:.9rem}
+.vs{border-radius:7px;padding:9px;text-align:center}
+.vs-y{background:var(--yes-bg)}.vs-n{background:var(--no-bg)}.vs-a{background:var(--na-bg)}
+.vs-n2{font-size:24px;font-weight:300;line-height:1}
+.vs-y .vs-n2{color:var(--yes)}.vs-n .vs-n2{color:var(--no)}.vs-a .vs-n2{color:var(--na)}
+.vs-lbl{font-size:10px;margin-top:2px}
+.vs-y .vs-lbl{color:var(--yes)}.vs-n .vs-lbl{color:var(--no)}.vs-a .vs-lbl{color:var(--na)}
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:5px}
+.lv{display:flex;align-items:center;gap:6px;border-radius:6px;padding:6px 8px;font-size:11px}
+.lv-y{background:var(--yes-bg)}.lv-n{background:var(--no-bg)}.lv-np{background:var(--na-bg)}
+.lv-ic{font-weight:700;flex-shrink:0}
+.lv-y .lv-ic{color:var(--yes)}.lv-n .lv-ic{color:var(--no)}.lv-np .lv-ic{color:var(--na)}
+.lv-nm{font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.p-d{background:var(--dem-bg);color:var(--dem);border-radius:3px;padding:1px 4px;font-size:9px;font-weight:700;flex-shrink:0}
+.p-r{background:var(--rep-bg);color:var(--rep);border-radius:3px;padding:1px 4px;font-size:9px;font-weight:700;flex-shrink:0}
+.macts{display:flex;gap:9px;margin-top:1.25rem;padding-top:1.1rem;border-top:1px solid var(--border)}
+.btn-p{padding:8px 14px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:500;text-decoration:none;display:inline-flex;align-items:center;gap:5px;font-family:inherit}
+.btn-s{padding:8px 14px;background:var(--cream);color:var(--text);border:1.5px solid var(--border2);border-radius:7px;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.note-box{background:var(--yes-bg);color:var(--yes);font-size:12px;padding:8px 12px;border-radius:6px;margin-bottom:1rem;font-weight:500}
+.leg-grid{max-width:1400px;margin:0 auto;padding:1.5rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:12px}
+.leg-card{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:all .15s}
+.leg-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);transform:translateY(-1px)}
+.leg-av{width:100%;height:110px;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:600;color:#fff}
+.leg-body{padding:11px 13px}
+.leg-name{font-size:13px;font-weight:600;color:var(--text);line-height:1.25}
+.leg-role{font-size:10px;color:var(--gold);margin-top:1px}
+.leg-dist{font-size:11px;color:var(--text3);margin-bottom:9px}
+.leg-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}
+.lst{background:var(--cream);border-radius:5px;padding:6px 4px;text-align:center}
+.lst-n{font-size:16px;font-weight:300;line-height:1}
+.lst-l{font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);margin-top:2px}
+.pc{display:inline-block;padding:2px 6px;border-radius:20px;font-size:10px;font-weight:700;float:right;margin-top:2px}
+.pc-d{background:var(--dem-bg);color:var(--dem)}.pc-r{background:var(--rep-bg);color:var(--rep)}
+.lm-hdr{background:var(--navy);border-radius:14px 14px 0 0;overflow:hidden;display:flex;position:relative}
+.lm-av{width:130px;height:150px;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:600;color:#fff;flex-shrink:0}
+.lm-info{padding:1.25rem;flex:1}
+.lm-name{font-size:19px;font-weight:500;color:#fff;margin-bottom:3px}
+.lm-sub{font-size:12px;color:rgba(255,255,255,.48);margin-bottom:10px}
+.lm-chips{display:flex;gap:5px;flex-wrap:wrap}
+.chip{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500}
+.comm-wrap{display:flex;flex-wrap:wrap;gap:6px}
+.comm-c{background:var(--cream);border:1px solid var(--border);border-radius:6px;padding:3px 9px;font-size:12px;color:var(--text2)}
+.sec-h{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:.65rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+.vr{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--cream2);font-size:12px;cursor:pointer}
+.vr:hover{background:var(--cream);margin:0 -4px;padding:7px 4px;border-radius:4px}
+.vr-n{font-family:'JetBrains Mono',monospace;font-size:11px;color:#1a3468;min-width:50px;flex-shrink:0}
+.vr-d{flex:1;color:var(--text2);line-height:1.35}
+.meet-wrap{max-width:1400px;margin:0 auto;padding:1.5rem}
+.mc{background:#fff;border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden}
+.mc-hdr{padding:.9rem 1.25rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;cursor:pointer}
+.mc-hdr:hover{background:#faf8f3}
+.mc-date{font-size:14px;font-weight:600;color:var(--navy)}
+.mc-type{font-size:11px;color:var(--text3);margin-top:2px}
+.mc-links{display:flex;gap:5px;flex-wrap:wrap}
+.mcl{display:inline-flex;align-items:center;padding:3px 8px;border:1px solid var(--border2);border-radius:5px;font-size:11px;color:var(--text2);background:var(--cream)}
+.mcl:hover{background:var(--navy);color:#fff}
+.mc-body{border-top:1px solid var(--border);display:none;padding:0 1.25rem}
+.mc-body.open{display:block}
+.mr{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--cream2);font-size:12px;cursor:pointer}
+.mr:hover{color:var(--navy)}
+.mr-n{font-family:'JetBrains Mono',monospace;font-size:11px;color:#1a3468;min-width:50px;flex-shrink:0}
+.key-box{background:#e8edf8;color:#334a88;padding:10px 14px;font-size:12px;line-height:1.6;border-bottom:1px solid var(--border)}
+footer{background:var(--navy);color:rgba(255,255,255,.3);text-align:center;padding:1.5rem;font-size:11px;border-top:3px solid var(--gold)}
+footer a{color:var(--gold2)}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div class="hdr-inner">
+    <div class="brand">
+      <div class="brand-name">Suffolk County Legislature</div>
+      <div class="brand-sub">2026 Resolution Tracker</div>
+    </div>
+    <nav class="tabs">
+      <button class="htab active" onclick="showTab('resolutions')">Resolutions</button>
+      <button class="htab" onclick="showTab('meetings')">Meetings</button>
+      <button class="htab" onclick="showTab('legislators')">Legislators</button>
+    </nav>
+    <div class="live-area">
+      <div class="live-dot"></div>
+      <span id="liveText">Loading…</span>
+    </div>
+  </div>
+</header>
+
+<div class="panel active" id="panel-resolutions">
+  <div class="hero"><div class="hero-inner">
+    <h2>2026 Legislative Activity</h2>
+    <p>All resolutions introduced in 2026 — IR#, Res#, status, sponsor, committee, and vote records. Click any row for full details. Auto-updated every Sunday from official Suffolk County Legislature PDFs.</p>
+    <div class="stats">
+      <div class="stat on" onclick="filterType('all')" id="s-all"><div class="stat-lbl"><div class="sdot" style="background:var(--gold2)"></div>Total</div><div class="stat-n" id="sn-all">—</div><div class="stat-note">All 2026 items</div></div>
+      <div class="stat" onclick="filterType('lot')" id="s-lot"><div class="stat-lbl"><div class="sdot" style="background:#5b9ae0"></div>LOT Resolutions</div><div class="stat-n" id="sn-lot">—</div><div class="stat-note">Laid on Table</div></div>
+      <div class="stat" onclick="filterType('pm')" id="s-pm"><div class="stat-lbl"><div class="sdot" style="background:#9966ee"></div>Procedural</div><div class="stat-n" id="sn-pm">—</div><div class="stat-note">Motions</div></div>
+      <div class="stat" onclick="filterType('ll')" id="s-ll"><div class="stat-lbl"><div class="sdot" style="background:#c87820"></div>Local Laws</div><div class="stat-n" id="sn-ll">—</div><div class="stat-note">Proposed</div></div>
+      <div class="stat" onclick="filterStatus('Adopted')" id="s-adopted"><div class="stat-lbl"><div class="sdot" style="background:#4ade80"></div>Adopted</div><div class="stat-n" id="sn-adopted">—</div><div class="stat-note">Passed</div></div>
+      <div class="stat" onclick="filterStatus('Tabled')" id="s-tabled"><div class="stat-lbl"><div class="sdot" style="background:#fbbf24"></div>Tabled</div><div class="stat-n" id="sn-tabled">—</div><div class="stat-note">Held/Deferred</div></div>
+    </div>
+  </div></div>
+  <div class="toolbar">
+    <div class="sbox">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="searchInput" placeholder="Search IR #, res #, keyword, sponsor, committee, CP #…">
+    </div>
+    <div class="fbg">
+      <button class="fb on" id="fb-all" onclick="filterType('all')">All Types</button>
+      <button class="fb" id="fb-lot" onclick="filterType('lot')"><span class="dot" style="background:#5b9ae0"></span>LOT</button>
+      <button class="fb" id="fb-pm" onclick="filterType('pm')"><span class="dot" style="background:#9966ee"></span>Procedural</button>
+      <button class="fb" id="fb-ll" onclick="filterType('ll')"><span class="dot" style="background:#c87820"></span>Local Laws</button>
+    </div>
+    <div class="fbg">
+      <button class="fb on" id="fbs-all" onclick="filterStatus('all')">All Status</button>
+      <button class="fb" id="fbs-Adopted" onclick="filterStatus('Adopted')">✓ Adopted</button>
+      <button class="fb" id="fbs-Tabled" onclick="filterStatus('Tabled')">⏸ Tabled</button>
+      <button class="fb" id="fbs-Pending" onclick="filterStatus('Pending')">⏳ Pending</button>
+    </div>
+  </div>
+  <div class="rbar"><span id="resCount">Loading…</span><a href="https://apps2.suffolkcountyny.gov/legislature/ressearch/" target="_blank">Full Legislation Database →</a></div>
+  <div class="tbl-wrap"><div class="tbl-card">
+    <table>
+      <thead><tr>
+        <th style="width:80px">Type</th><th style="width:65px">IR #</th><th style="width:60px">Res #</th>
+        <th>Description / Sponsor</th><th style="width:70px">Session</th>
+        <th style="width:125px">Committee</th><th style="width:85px">Status</th>
+        <th style="width:55px">Vote</th><th style="width:52px">PDF</th>
+      </tr></thead>
+      <tbody id="tbody"><tr><td colspan="9" class="loading">Loading resolution data…</td></tr></tbody>
+    </table>
+  </div></div>
+</div>
+
+<div class="panel" id="panel-meetings">
+  <div class="hero"><div class="hero-inner">
+    <h2>2026 General Meetings</h2>
+    <p>Official documents for all 2026 legislative sessions. Click a meeting to expand and see resolutions.</p>
+  </div></div>
+  <div class="key-box"><strong>Marked Agenda key:</strong> A=Approved · T=Tabled · F=Failed · W=Withdrawn · SC=Sent to Committee · TSC=Tabled Subject to Call · IR#=Introductory Res # · RES#=assigned after passing · Absent Feb 3: Richberg, Gonzalez, Kennedy</div>
+  <div class="meet-wrap" id="meetList"><div class="loading">Loading…</div></div>
+</div>
+
+<div class="panel" id="panel-legislators">
+  <div class="hero"><div class="hero-inner">
+    <h2>18 Legislators — 2026</h2>
+    <p>Click any legislator to see their party, committees, sponsored resolutions, and vote record.</p>
+    <div style="display:flex;gap:10px;margin-top:.5rem">
+      <div class="stat" style="padding:10px 13px"><div class="stat-lbl"><div class="sdot" style="background:#f87171"></div>Republicans</div><div class="stat-n">11</div></div>
+      <div class="stat" style="padding:10px 13px"><div class="stat-lbl"><div class="sdot" style="background:#60a5fa"></div>Democrats</div><div class="stat-n">7</div></div>
+    </div>
+  </div></div>
+  <div class="leg-grid" id="legGrid"><div class="loading">Loading…</div></div>
+</div>
+
+<div class="modal-bg" id="resBg" onclick="if(event.target===this)closeRes()"><div class="modal" id="resBox"></div></div>
+<div class="modal-bg" id="legBg" onclick="if(event.target===this)closeLeg()"><div class="modal" id="legBox"></div></div>
+
+<footer>
+  <p>Data from <a href="https://www.scnylegislature.us" target="_blank">scnylegislature.us</a> · Suffolk County Legislature, 725 Veterans Memorial Hwy, Smithtown NY · <a href="https://apps2.suffolkcountyny.gov/legislature/ressearch/" target="_blank">Search Legislation</a></p>
+  <p style="margin-top:5px">Workflow: Laid on Table → Committee Review → General Meeting Vote · Auto-updated every Sunday via GitHub Actions</p>
+</footer>
+
+<script>
+const LEGS=[
+  {id:"doroski",    name:"Greg Doroski",         dist:1, party:"D",role:"",         color:"#1a4d99",initials:"GD",committees:["Economic Dev, Planning & Housing","Public Safety","Public Works, Transportation & Energy","Ways & Means"]},
+  {id:"welker",     name:"Ann Welker",            dist:2, party:"D",role:"",         color:"#1a4d99",initials:"AW",committees:["Environment, Parks & Agriculture","Health","Public Works, Transportation & Energy","Veterans","Ways & Means"]},
+  {id:"mazzarella", name:"James F. Mazzarella",   dist:3, party:"R",role:"D.P.O.",   color:"#991a1a",initials:"JM",committees:["Economic Dev, Planning & Housing","Education, Labor, Consumer Affairs","Govt Operations, Info Tech","Public Safety"]},
+  {id:"caracappa",  name:"Nick Caracappa",         dist:4, party:"R",role:"",         color:"#991a1a",initials:"NC",committees:["Economic Dev, Planning & Housing","Education, Labor, Consumer Affairs","Environment, Parks & Agriculture","Public Works, Transportation & Energy","Veterans"]},
+  {id:"englebright",name:"Steven Englebright",    dist:5, party:"D",role:"",         color:"#1a4d99",initials:"SE",committees:["Education, Labor, Consumer Affairs","Environment, Parks & Agriculture","Public Works, Transportation & Energy","Veterans"]},
+  {id:"lennon",     name:"Chad Lennon",            dist:6, party:"R",role:"",         color:"#991a1a",initials:"CL",committees:["Environment, Parks & Agriculture","Health","Public Safety","Public Works, Transportation & Energy","Veterans","Ways & Means"]},
+  {id:"thorne",     name:"Dominick S. Thorne",    dist:7, party:"R",role:"",         color:"#991a1a",initials:"DT",committees:["Budget & Finance","Fire, Rescue & EMS","Public Safety","Public Works, Transportation & Energy","Seniors & Human Services","Veterans"]},
+  {id:"piccirillo", name:"Anthony A. Piccirillo", dist:8, party:"R",role:"P.O.",     color:"#991a1a",initials:"AP",committees:["Presiding Officer — ex officio all committees"]},
+  {id:"gonzalez",   name:"Samuel Gonzalez",        dist:9, party:"D",role:"",         color:"#1a4d99",initials:"SG",committees:["Economic Dev, Planning & Housing","Education, Labor, Consumer Affairs","Govt Operations, Info Tech","Health","Public Safety"]},
+  {id:"bergin",     name:"Trish Bergin",           dist:10,party:"R",role:"",         color:"#991a1a",initials:"TB",committees:["Budget & Finance","Economic Dev, Planning & Housing","Education, Labor, Consumer Affairs","Govt Operations, Info Tech"]},
+  {id:"flotteron",  name:"Steven J. Flotteron",    dist:11,party:"R",role:"",         color:"#991a1a",initials:"SF",committees:["Budget & Finance","Govt Operations, Info Tech","Public Safety","Seniors & Human Services","Ways & Means"]},
+  {id:"kennedy",    name:"Leslie Kennedy",          dist:12,party:"R",role:"",         color:"#991a1a",initials:"LK",committees:["Budget & Finance","Economic Dev, Planning & Housing","Education, Labor, Consumer Affairs","Environment, Parks & Agriculture","Fire, Rescue & EMS","Govt Operations, Info Tech","Health","Public Safety","Public Works, Transportation & Energy","Seniors & Human Services","Veterans","Ways & Means"]},
+  {id:"formica",    name:"Salvatore Formica",      dist:13,party:"R",role:"",         color:"#991a1a",initials:"SF2",committees:["Budget & Finance","Fire, Rescue & EMS","Health","Public Safety","Seniors & Human Services","Veterans","Ways & Means"]},
+  {id:"renna",      name:"RJ Renna",               dist:14,party:"R",role:"",         color:"#991a1a",initials:"RR",committees:["Economic Dev, Planning & Housing","Environment, Parks & Agriculture","Public Works, Transportation & Energy"]},
+  {id:"richberg",   name:"Jason Richberg",         dist:15,party:"D",role:"Min. Leader",color:"#1a4d99",initials:"JR",committees:["Budget & Finance","Economic Dev, Planning & Housing","Education, Labor, Consumer Affairs","Govt Operations, Info Tech","Seniors & Human Services"]},
+  {id:"sanin",      name:"Rebecca Sanin",          dist:16,party:"D",role:"",         color:"#1a4d99",initials:"RS",committees:["Environment, Parks & Agriculture","Fire, Rescue & EMS","Seniors & Human Services","Veterans"]},
+  {id:"donnelly",   name:"Tom Donnelly",            dist:17,party:"D",role:"",         color:"#1a4d99",initials:"TD",committees:["Budget & Finance","Fire, Rescue & EMS","Public Safety","Seniors & Human Services","Ways & Means"]},
+  {id:"bontempi",   name:"Stephanie Bontempi",     dist:18,party:"R",role:"",         color:"#991a1a",initials:"SB",committees:["Economic Dev, Planning & Housing","Education, Labor, Consumer Affairs","Environment, Parks & Agriculture","Govt Operations, Info Tech","Public Safety","Public Works, Transportation & Energy"]},
+];
+
+let DATA={resolutions:[],meetings:[],lastUpdated:null};
+let activeType="all",activeStatus="all",searchQ="",expandedMeet=null;
+const SESS_ORDER=["Jan 5, 2026","Feb 3, 2026","Mar 10, 2026","Apr 21, 2026","May 12, 2026"];
+const TC={lot:{lbl:"LOT",bc:"b-lot",col:"#5b9ae0"},pm:{lbl:"Procedural",bc:"b-pm",col:"#9966ee"},ll:{lbl:"Local Law",bc:"b-ll",col:"#c87820"}};
+const SC_MAP={Adopted:"s-adopted",Tabled:"s-tabled",Failed:"s-failed",Pending:"s-pending",Set:"s-set","Tabled Subject to Call":"s-tabled","Sent to Committee":"s-pending","No Action":"s-pending"};
+
+async function loadData(){
+  try{
+    const r=await fetch('resolutions.json?t='+Date.now());
+    if(!r.ok)throw new Error();
+    DATA=await r.json();
+    const d=DATA.lastUpdated?new Date(DATA.lastUpdated):null;
+    document.getElementById('liveText').textContent=d?'Updated '+d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):DATA.resolutions.length+' resolutions';
+  }catch(e){
+    document.getElementById('liveText').textContent='Data unavailable';
+  }
+  updateStats();renderTable();renderMeetings();renderLegGrid();
+}
+
+function updateStats(){
+  const R=DATA.resolutions;
+  document.getElementById('sn-all').textContent=R.length;
+  document.getElementById('sn-lot').textContent=R.filter(r=>r.type==='lot').length;
+  document.getElementById('sn-pm').textContent=R.filter(r=>r.type==='pm').length;
+  document.getElementById('sn-ll').textContent=R.filter(r=>r.type==='ll').length;
+  document.getElementById('sn-adopted').textContent=R.filter(r=>r.status==='Adopted').length;
+  document.getElementById('sn-tabled').textContent=R.filter(r=>['Tabled','Tabled Subject to Call'].includes(r.status)).length;
+}
+
+function filterType(t){
+  activeType=t;activeStatus='all';
+  document.querySelectorAll('[id^="s-"],[id^="fb-"]').forEach(e=>e.classList.remove('on'));
+  const sb=document.getElementById('s-'+t);if(sb)sb.classList.add('on');
+  const fb=document.getElementById('fb-'+t);if(fb)fb.classList.add('on');
+  document.getElementById('fbs-all').classList.add('on');
+  renderTable();
+}
+function filterStatus(s){
+  activeStatus=s;activeType='all';
+  document.querySelectorAll('[id^="fbs-"],[id^="s-"]').forEach(e=>e.classList.remove('on'));
+  const e=document.getElementById('fbs-'+s);if(e)e.classList.add('on');
+  document.getElementById('fb-all').classList.add('on');
+  renderTable();
+}
+document.getElementById('searchInput').addEventListener('input',function(){searchQ=this.value.toLowerCase();renderTable();});
+
+function getFiltered(){
+  let items=DATA.resolutions;
+  if(activeType!=='all')items=items.filter(r=>r.type===activeType);
+  if(activeStatus==='Pending')items=items.filter(r=>['Pending','Set','Sent to Committee','No Action'].includes(r.status));
+  else if(activeStatus==='Tabled')items=items.filter(r=>['Tabled','Tabled Subject to Call'].includes(r.status));
+  else if(activeStatus!=='all')items=items.filter(r=>r.status===activeStatus);
+  if(searchQ)items=items.filter(r=>(r.ir||'').toLowerCase().includes(searchQ)||(r.resNum||'').toString().includes(searchQ)||(r.desc||'').toLowerCase().includes(searchQ)||(r.sponsor||'').toLowerCase().includes(searchQ)||(r.committee||'').toLowerCase().includes(searchQ)||(r.status||'').toLowerCase().includes(searchQ)||(r.session||'').toLowerCase().includes(searchQ)||(r.type||'').includes(searchQ)||((r.cp||[]).some(c=>c.includes(searchQ)))||((r.note||'').toLowerCase().includes(searchQ)));
+  return items;
+}
+
+function renderTable(){
+  const items=getFiltered();
+  const tbody=document.getElementById('tbody');
+  document.getElementById('resCount').innerHTML='Showing <strong>'+items.length+'</strong> of <strong>'+DATA.resolutions.length+'</strong> resolutions';
+  if(!items.length){tbody.innerHTML='<tr><td colspan="9" class="empty">No resolutions match your search.</td></tr>';return;}
+  let html='';
+  const grouped=SESS_ORDER.map(s=>({s,rows:items.filter(r=>r.session===s)})).filter(g=>g.rows.length>0);
+  grouped.forEach(({s,rows})=>{
+    const col=TC[rows[0]?.type]?.col||'#888';
+    html+='<tr class="sep-row"><td colspan="9"><span style="display:inline-flex;align-items:center;gap:7px"><span style="width:7px;height:7px;border-radius:50%;background:'+col+';display:inline-block"></span>'+s+' — '+rows.length+' item'+(rows.length!==1?'s':'')+'</span></td></tr>';
+    rows.forEach(r=>{
+      const cfg=TC[r.type]||TC.lot;
+      const yc=r.votes?Object.values(r.votes).filter(v=>v==='Y').length:null;
+      const nc=r.votes?Object.values(r.votes).filter(v=>v==='N').length:0;
+      const vc=yc!==null?'<span class="vote-chip">'+yc+'–'+nc+'</span>':'<span style="font-size:11px;color:var(--text3)">—</span>';
+      const cp=r.cp?.length?'<span style="color:#1655a0"> · CP '+r.cp.join(',')+'</span>':'';
+      const nt=r.note?'<span style="color:var(--gold)"> · ★ '+r.note.slice(0,35)+'</span>':'';
+      const sc=SC_MAP[r.status]||'s-pending';
+      html+='<tr onclick="openRes(\''+r.ir.replace(/'/g,"\\'")+'\')">'
+        +'<td><span class="badge '+cfg.bc+'">'+cfg.lbl+'</span></td>'
+        +'<td class="mono">'+r.ir+'</td>'
+        +'<td class="mono">'+(r.resNum||'—')+'</td>'
+        +'<td><div style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:360px">'+(r.desc||'')+'</div><div style="font-size:10px;color:var(--text3);margin-top:1px">'+(r.sponsor||'')+cp+nt+'</div></td>'
+        +'<td style="font-size:11px;color:var(--text3);white-space:nowrap">'+(r.session||'')+'</td>'
+        +'<td style="font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+((r.committee||'').length>28?(r.committee||'').slice(0,26)+'…':r.committee||'')+'</td>'
+        +'<td><span class="badge '+sc+'">'+(r.status||'Unknown')+'</span></td>'
+        +'<td>'+vc+'</td>'
+        +'<td><a href="'+(r.sourceUrl||'#')+'" target="_blank" class="pdf-btn" onclick="event.stopPropagation()">PDF ↗</a></td>'
+        +'</tr>';
+    });
+  });
+  tbody.innerHTML=html;
+}
+
+function openRes(ir){
+  const r=DATA.resolutions.find(x=>x.ir===ir);if(!r)return;
+  const cfg=TC[r.type]||TC.lot;
+  const sc=SC_MAP[r.status]||'s-pending';
+  const yc=r.votes?Object.values(r.votes).filter(v=>v==='Y').length:null;
+  const nc=r.votes?Object.values(r.votes).filter(v=>v==='N').length:0;
+  const npc=r.votes?Object.values(r.votes).filter(v=>v==='NP').length:0;
+  const steps=[{lbl:'Laid on Table',done:true},{lbl:'Committee',done:r.status!=='Pending'&&r.status!=='Unknown'},{lbl:'General Meeting',done:['Adopted','Tabled','Failed','Tabled Subject to Call'].includes(r.status)},{lbl:r.status==='Adopted'?'Enacted':['Tabled','Tabled Subject to Call'].includes(r.status)?'Tabled':r.status==='Failed'?'Failed':'Pending',done:r.status==='Adopted'}];
+  const flowHtml=steps.map((s,i)=>(i>0?'<span class="flow-arr">→</span>':'')+'<span class="'+(s.done?'flow-done':'flow-pend')+'">'+(s.done?'✓ ':'○ ')+s.lbl+'</span>').join('');
+  const voteHtml=r.votes
+    ?'<div class="vhdr">Vote Record — '+r.session+'</div><div class="vsumm"><div class="vs vs-y"><div class="vs-n2">'+yc+'</div><div class="vs-lbl">Yes / Aye</div></div><div class="vs vs-n"><div class="vs-n2">'+nc+'</div><div class="vs-lbl">No / Nay</div></div><div class="vs vs-a"><div class="vs-n2">'+npc+'</div><div class="vs-lbl">Not Present</div></div></div><div class="vgrid">'+LEGS.map(l=>{const v=r.votes[l.id]||'NP';const cls=v==='Y'?'lv-y':v==='N'?'lv-n':'lv-np';const ic=v==='Y'?'✓':v==='N'?'✗':'—';const pc=l.party==='D'?'class="p-d"':'class="p-r"';return'<div class="lv '+cls+'"><span class="lv-ic">'+ic+'</span><span class="lv-nm">'+l.name.split(' ').slice(-1)[0]+'</span><span '+pc+'>'+l.party+'</span></div>';}).join('')+'</div>'
+    :'<div style="background:var(--cream);padding:.9rem;border-radius:7px;font-size:12px;color:var(--text3)">'+(r.status==='Pending'||r.status==='Set'?'This resolution is pending committee review or a future General Meeting vote.':'Vote record not yet indexed. View the official PDF for full details.')+'</div>';
+  const cpRow=r.cp?.length?'<div class="mi"><div class="mi-lbl">Capital Project #s</div><div class="mi-val" style="font-family:\'JetBrains Mono\',monospace;font-size:11px">CP '+r.cp.join(', ')+'</div></div>':'';
+  const noteHtml=r.note?'<div class="note-box">★ '+r.note+'</div>':'';
+  document.getElementById('resBox').innerHTML='<div class="modal-hdr"><div class="modal-hdr-text"><div class="mnum">IR '+r.ir+(r.resNum?' · Res. #'+r.resNum:'')+' · '+r.session+'</div><h3>'+r.desc+'</h3></div><button class="modal-close" onclick="closeRes()">×</button></div><div class="modal-body">'+noteHtml+'<div class="flow">'+flowHtml+'</div><div class="mmeta"><div class="mi"><div class="mi-lbl">Type</div><div class="mi-val"><span class="badge '+cfg.bc+'">'+cfg.lbl+'</span></div></div><div class="mi"><div class="mi-lbl">Status</div><div class="mi-val"><span class="badge '+sc+'">'+r.status+'</span></div></div><div class="mi"><div class="mi-lbl">Sponsor</div><div class="mi-val">'+(r.sponsor||'—')+'</div></div><div class="mi"><div class="mi-lbl">Committee</div><div class="mi-val" style="font-size:12px">'+(r.committee||'—')+'</div></div><div class="mi"><div class="mi-lbl">Session</div><div class="mi-val">'+r.session+'</div></div>'+cpRow+'</div><div class="mdesc">'+r.desc+'</div>'+voteHtml+'<div class="macts"><a href="'+(r.sourceUrl||'#')+'" target="_blank" class="btn-p">View Official PDF ↗</a><a href="https://apps2.suffolkcountyny.gov/legislature/ressearch/" target="_blank" class="btn-s">Search Legislation DB</a></div></div>';
+  document.getElementById('resBg').classList.add('open');
+}
+function closeRes(){document.getElementById('resBg').classList.remove('open');}
+
+function renderLegGrid(){
+  const grid=document.getElementById('legGrid');
+  grid.innerHTML=LEGS.map(l=>{
+    const yc=DATA.resolutions.filter(r=>r.votes&&r.votes[l.id]==='Y').length;
+    const nc=DATA.resolutions.filter(r=>r.votes&&r.votes[l.id]==='N').length;
+    const sp=DATA.resolutions.filter(r=>{const s=(r.sponsor||'').toLowerCase();return s.includes(l.name.split(' ').slice(-1)[0].toLowerCase())&&!s.includes('co. exec');}).length;
+    const pc=l.party==='D'?'<span class="pc pc-d">D</span>':'<span class="pc pc-r">R</span>';
+    const roleTag=l.role?'<div class="leg-role">'+l.role+'</div>':'';
+    return'<div class="leg-card" onclick="openLeg(\''+l.id+'\')">'
+      +'<div class="leg-av" style="background:'+l.color+'">'+l.initials+'</div>'
+      +'<div class="leg-body"><div class="leg-name">'+l.name+pc+'</div>'+roleTag
+      +'<div class="leg-dist">District '+l.dist+'</div>'
+      +'<div class="leg-stats"><div class="lst"><div class="lst-n" style="color:var(--yes)">'+yc+'</div><div class="lst-l">Yes</div></div><div class="lst"><div class="lst-n" style="color:var(--no)">'+nc+'</div><div class="lst-l">No</div></div><div class="lst"><div class="lst-n">'+sp+'</div><div class="lst-l">Sponsored</div></div></div>'
+      +'</div></div>';
+  }).join('');
+}
+
+function openLeg(id){
+  const l=LEGS.find(x=>x.id===id);if(!l)return;
+  const yesVotes=DATA.resolutions.filter(r=>r.votes&&r.votes[id]==='Y');
+  const noVotes=DATA.resolutions.filter(r=>r.votes&&r.votes[id]==='N');
+  const sponsored=DATA.resolutions.filter(r=>{const s=(r.sponsor||'').toLowerCase();return s.includes(l.name.split(' ').slice(-1)[0].toLowerCase())&&!s.includes('co. exec');});
+  const pchip=l.party==='D'?'<span class="chip" style="background:var(--dem-bg);color:var(--dem)">Democrat</span>':'<span class="chip" style="background:var(--rep-bg);color:var(--rep)">Republican</span>';
+  const roleLabels={"P.O.":"Presiding Officer","D.P.O.":"Deputy Presiding Officer","Min. Leader":"Minority Leader"};
+  const roleStr=l.role?' · '+(roleLabels[l.role]||l.role):'';
+  const commHtml=l.committees.map(c=>'<span class="comm-c">'+c+'</span>').join('');
+  const sponsHtml=sponsored.length?sponsored.slice(0,12).map(r=>'<div class="vr" onclick="closeLeg();setTimeout(()=>openRes(\''+r.ir.replace(/'/g,"\\'")+'.\'),150)"><span class="vr-n">'+r.ir+'</span><span class="vr-d">'+(r.desc.length>75?r.desc.slice(0,73)+'…':r.desc)+'</span><span class="badge '+(SC_MAP[r.status]||'s-pending')+'">'+r.status+'</span></div>').join(''):'<div style="font-size:12px;color:var(--text3);padding:.4rem 0">No independently-sponsored resolutions in current data.</div>';
+  const allVotes=[...yesVotes,...noVotes];
+  const voteRowsHtml=allVotes.length?allVotes.slice(0,15).map(r=>{const v=r.votes[id];const pill=v==='Y'?'<span class="badge s-adopted">Yes</span>':'<span class="badge s-failed">No</span>';return'<div class="vr" onclick="closeLeg();setTimeout(()=>openRes(\''+r.ir.replace(/'/g,"\\'")+'\'),150)"><span class="vr-n">IR '+r.ir+'</span><span class="vr-d">'+(r.desc.length>75?r.desc.slice(0,73)+'…':r.desc)+'</span>'+pill+'</div>';}).join(''):'<div style="font-size:12px;color:var(--text3);padding:.4rem 0">Most 2026 votes are unanimous 18–0 voice votes. '+yesVotes.length+' yes votes recorded for '+l.name.split(' ').slice(-1)[0]+' in this dataset.</div>';
+  document.getElementById('legBox').innerHTML='<div class="lm-hdr"><div class="lm-av" style="background:'+l.color+'">'+l.initials+'</div><div class="lm-info"><div class="lm-name">'+l.name+'</div><div class="lm-sub">District '+l.dist+roleStr+'</div><div class="lm-chips">'+pchip+'<span class="chip" style="background:var(--yes-bg);color:var(--yes)">'+yesVotes.length+' Yes</span><span class="chip" style="background:var(--no-bg);color:var(--no)">'+noVotes.length+' No</span><span class="chip" style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.7)">'+sponsored.length+' Sponsored</span></div></div><button class="modal-close" style="position:absolute;top:10px;right:10px" onclick="closeLeg()">×</button></div><div class="modal-body"><div style="margin-bottom:1.25rem"><div class="sec-h">Committee Assignments ('+l.committees.length+')</div><div class="comm-wrap">'+commHtml+'</div></div><div style="margin-bottom:1.25rem"><div class="sec-h">Sponsored Resolutions ('+sponsored.length+') — click to open</div>'+sponsHtml+(sponsored.length>12?'<div style="font-size:11px;color:var(--text3);padding:.4rem 0">…and '+(sponsored.length-12)+' more.</div>':'')+'</div><div><div class="sec-h">Vote Record ('+allVotes.length+' tracked) — click to open resolution</div>'+voteRowsHtml+(allVotes.length>15?'<div style="font-size:11px;color:var(--text3);padding:.4rem 0">…and '+(allVotes.length-15)+' more.</div>':'')+'</div></div>';
+  document.getElementById('legBg').classList.add('open');
+}
+function closeLeg(){document.getElementById('legBg').classList.remove('open');}
+
+function renderMeetings(){
+  const meetings=DATA.meetings.length?DATA.meetings:[
+    {label:"Jan 5, 2026",type:"Organizational Meeting",docs:[{name:"LOT Resolutions",url:"https://www.scnylegislature.us/DocumentCenter/View/126663/01052026-Laid-on-the-Table-Resolutions-PDF"},{name:"Minutes",url:"https://www.scnylegislature.us/DocumentCenter/View/127567/01052026-Organizational-Meeting-Minutes-PDF"}]},
+    {label:"Feb 3, 2026",type:"General Meeting",docs:[{name:"Minutes",url:"https://www.scnylegislature.us/DocumentCenter/View/127979/02032026-General-Meeting-Minutes-PDF"},{name:"Marked Agenda",url:"https://www.scnylegislature.us/DocumentCenter/View/127636/02032026-General-Meeting-Marked-Agenda-PDF"},{name:"LOT Resolutions",url:"https://www.scnylegislature.us/DocumentCenter/View/127573/02032026-Laid-on-the-Table-Resolutions-PDF"},{name:"Action Report",url:"https://www.scnylegislature.us/DocumentCenter/View/127659/02032026-Action-Report-PDF"}]},
+    {label:"Mar 10, 2026",type:"General Meeting",docs:[{name:"Minutes",url:"https://www.scnylegislature.us/DocumentCenter/View/128621/03102026-General-Meeting-Minutes-PDF"},{name:"Marked Agenda",url:"https://www.scnylegislature.us/DocumentCenter/View/128172/03102026-General-Meeting-Marked-Agenda-PDF"},{name:"LOT Resolutions",url:"https://www.scnylegislature.us/DocumentCenter/View/127984/03102026-Laid-on-the-Table-Resolutions-PDF"},{name:"Action Report",url:"https://www.scnylegislature.us/DocumentCenter/View/128168/03102026-Action-Report-PDF"}]},
+    {label:"Apr 21, 2026",type:"General Meeting",docs:[{name:"Marked Agenda",url:"https://www.scnylegislature.us/DocumentCenter/View/128778/04212026-General-Meeting-Marked-Agenda-PDF"},{name:"Resolution Packet",url:"https://www.scnylegislature.us/DocumentCenter/View/128633/04212026-General-Meeting-Resolution-Packet-PDF"},{name:"Action Report",url:"https://www.scnylegislature.us/DocumentCenter/View/128789/04212026-Action-Report-PDF"}]},
+    {label:"May 12, 2026",type:"General Meeting",docs:[{name:"Action Report",url:"https://www.scnylegislature.us/DocumentCenter/View/129295/05122026-Action-Report-PDF"}]},
+  ];
+  document.getElementById('meetList').innerHTML=meetings.map((m,i)=>{
+    const links=m.docs.map(d=>'<a href="'+d.url+'" target="_blank" class="mcl" onclick="event.stopPropagation()">'+d.name+' ↗</a>').join('');
+    const resos=DATA.resolutions.filter(r=>r.session===m.label).slice(0,12).map(r=>'<div class="mr" onclick="openRes(\''+r.ir.replace(/'/g,"\\'")+'\')"><span class="mr-n">IR '+r.ir+'</span><span style="flex:1;color:var(--text2);line-height:1.35;font-size:12px">'+(r.desc.length>90?r.desc.slice(0,88)+'…':r.desc)+'</span><span class="badge '+(SC_MAP[r.status]||'s-pending')+'" style="font-size:9px;flex-shrink:0">'+r.status+'</span></div>').join('');
+    const open=expandedMeet===i;
+    return'<div class="mc"><div class="mc-hdr" onclick="toggleMeet('+i+')"><div><div class="mc-date">'+m.label+'</div><div class="mc-type">'+m.type+'</div></div><div class="mc-links" onclick="event.stopPropagation()">'+links+'</div><span style="color:var(--text3);font-size:11px;transform:rotate('+(open?180:0)+'deg);transition:transform .2s;flex-shrink:0">▼</span></div><div class="mc-body'+(open?' open':'')+'">'+(resos||'<div style="padding:.75rem 0;font-size:12px;color:var(--text3)">Click document links above to view official PDFs.</div>')+'</div></div>';
+  }).join('');
+}
+function toggleMeet(i){expandedMeet=expandedMeet===i?null:i;renderMeetings();}
+
+function showTab(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  document.querySelectorAll('.htab').forEach((b,i)=>{b.classList.toggle('active',['resolutions','meetings','legislators'][i]===name);});
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeRes();closeLeg();}});
+loadData();
+</script>
+</body>
+</html>
