@@ -36,7 +36,6 @@ jobs:
 
       - name: Copy data to public
         run: mkdir -p public && cp data/resolutions.json public/resolutions.json
-
 - name: Commit updated data
         run: |
           git config --local user.email "action@github.com"
