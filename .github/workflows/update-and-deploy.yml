@@ -37,13 +37,15 @@ jobs:
       - name: Copy data to public
         run: mkdir -p public && cp data/resolutions.json public/resolutions.json
 
-      - name: Commit updated data
+- name: Commit updated data
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+          git fetch origin main
+          git reset --soft origin/main
           git add data/resolutions.json public/resolutions.json
           git diff --staged --quiet || git commit -m "Auto-update: $(date +'%Y-%m-%d')"
-          git push
+          git push origin main
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
