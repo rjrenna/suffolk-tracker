@@ -1,0 +1,57 @@
+name: Update Resolution Data & Deploy
+
+on:
+  schedule:
+    - cron: '0 6 * * 0'
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  scrape-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pdfplumber requests
+
+      - name: Run scraper
+        run: python src/scraper.py
+
+      - name: Copy data to public
+        run: mkdir -p public && cp data/resolutions.json public/resolutions.json
+
+      - name: Commit updated data
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data/resolutions.json public/resolutions.json
+          git diff --staged --quiet || git commit -m "Auto-update: $(date +'%Y-%m-%d')"
+          git push
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./public
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
