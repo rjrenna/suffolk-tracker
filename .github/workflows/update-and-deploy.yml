@@ -29,10 +29,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: |
-          pip install playwright pdfplumber requests
-          playwright install chromium
-          playwright install-deps chromium
+        run: pip install requests
 
       - name: Run scraper
         run: python src/scraper.py
