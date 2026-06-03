@@ -1,7 +1,7 @@
 """
 Suffolk County Legislature 2026 Document Tracker
-Scrapes HTML index pages for all document types — no PDF parsing.
-Automatically picks up new documents as they are published.
+Scrapes HTML index pages for all document types.
+Verified against actual page HTML from scnylegislature.us
 """
 
 import json, re, sys
@@ -10,52 +10,7 @@ from pathlib import Path
 import urllib.request
 
 YEAR = "2026"
-
-# ── ALL DOCUMENT SOURCE PAGES ─────────────────────────────────────────────────
-SOURCES = [
-    {
-        "url": "https://www.scnylegislature.us/661/Laid-on-the-Table-Resolutions-LOT",
-        "type": "lot",
-        "label": "LOT Resolutions",
-    },
-    {
-        "url": "https://www.scnylegislature.us/648/Procedural-Motions",
-        "type": "pm",
-        "label": "Procedural Motions",
-    },
-    {
-        "url": "https://www.scnylegislature.us/665/Local-Laws",
-        "type": "ll",
-        "label": "Local Laws",
-    },
-    {
-        "url": "https://www.scnylegislature.us/684/Budget-Amendments",
-        "type": "budget",
-        "label": "Budget Amendments",
-    },
-    {
-        "url": "https://www.scnylegislature.us/205/Home-Rule-Messages",
-        "type": "hrl",
-        "label": "Home Rule Messages",
-    },
-    {
-        "url": "https://www.scnylegislature.us/765/General-Meetings-Agendas-Minutes",
-        "type": "meeting",
-        "label": "Meeting Documents",
-    },
-]
-
-# ── MEETINGS INDEX PAGES ──────────────────────────────────────────────────────
-MEETING_SOURCES = [
-    {
-        "url": "https://www.scnylegislature.us/661/Laid-on-the-Table-Resolutions-LOT",
-        "doc_type": "LOT Resolutions",
-    },
-    {
-        "url": "https://www.scnylegislature.us/765/General-Meetings-Agendas-Minutes",
-        "doc_type": "Meeting Documents",
-    },
-]
+BASE = "https://www.scnylegislature.us"
 
 ALL_LEGS = [
     "doroski","welker","mazzarella","caracappa","englebright","lennon",
@@ -71,7 +26,6 @@ SESSION_ABSENT = {
     "May 12, 2026": [],
 }
 
-# Known vote outcomes: IR# -> (status, res#)
 KNOWN_OUTCOMES = {
     "1031":("Adopted","177"),"1038":("Adopted","102"),"1039":("Adopted","133"),
     "1044":("Adopted","187"),"1045":("Adopted","94"), "1046":("Adopted","95"),
@@ -152,30 +106,45 @@ def fetch_html(url):
     try:
         req = urllib.request.Request(
             url,
-            headers={"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
         )
         with urllib.request.urlopen(req, timeout=20) as r:
-            return r.read().decode("utf-8", errors="replace")
+            content = r.read().decode("utf-8", errors="replace")
+            print(f"  Fetched {len(content)} chars from {url}")
+            return content
     except Exception as e:
         print(f"  ERROR fetching {url}: {e}", file=sys.stderr)
         return ""
 
-def strip_tags(html):
-    return re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', '', html)).strip()
+def get_all_links(html):
+    """Extract all href links and their text from HTML."""
+    # Match <a href="...">text</a> — handles multi-line and attributes
+    pattern = re.compile(
+        r'<a\s[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)</a>',
+        re.IGNORECASE | re.DOTALL
+    )
+    results = []
+    for m in pattern.finditer(html):
+        url = m.group(1).strip()
+        text = re.sub(r'<[^>]+>', '', m.group(2)).strip()
+        text = re.sub(r'\s+', ' ', text)
+        if url and text:
+            results.append((url, text))
+    return results
 
 def get_committee(desc):
     d = desc.lower()
-    if any(k in d for k in ["police","sheriff","jail","correctional","district attorney","probation","firearm","crime","criminal","narcotics"]): return "Public Safety"
+    if any(k in d for k in ["police","sheriff","jail","correctional","district attorney","probation","firearm","crime","criminal"]): return "Public Safety"
     if any(k in d for k in ["park","farmland","environment","wetland","agriculture","golf course","marina","open space","drinking water","conservation","beach"]): return "Environment, Parks & Agriculture"
     if any(k in d for k in ["road","highway","bridge","transit","bus","transportation","sewer","drainage","airport","ferry","traffic"]): return "Public Works, Transportation & Energy"
     if any(k in d for k in ["housing","affordable","workforce","economic","industrial","waterfront","development","planning","jumpstart"]): return "Economic Dev, Planning & Housing"
     if any(k in d for k in ["health","mental","substance","addiction","medical","nursing","hospital","clinic","wic","oasas","behavioral"]): return "Health"
     if any(k in d for k in ["senior","aging","youth","human service","nutrition","child care","day care"]): return "Seniors & Human Services"
-    if any(k in d for k in ["veteran","military","armed forces"]): return "Veterans"
+    if any(k in d for k in ["veteran","military"]): return "Veterans"
     if any(k in d for k in ["education","labor","consumer","human rights","licensing board","college"]): return "Education, Labor, Consumer Affairs"
-    if any(k in d for k in ["fire","rescue","ems","emergency service","aed","hazmat","911"]): return "Fire, Rescue & EMS"
+    if any(k in d for k in ["fire","rescue","ems","emergency service","aed","hazmat"]): return "Fire, Rescue & EMS"
     if any(k in d for k in ["technology","personnel","salary","software","network","computer","information tech","payroll","classification"]): return "Govt Operations, Info Tech"
-    if any(k in d for k in ["budget","finance","appropriat","fund transfer","operating budget","capital budget","refund","chargeback","bond","amending resolution"]): return "Budget & Finance"
+    if any(k in d for k in ["budget","finance","appropriat","fund transfer","operating budget","capital budget","refund","chargeback","bond","amending"]): return "Budget & Finance"
     if any(k in d for k in ["sale","conveyance","tax","mortgage","comptroller","insurance","settlement","reconveyance","clerk","deed"]): return "Ways & Means"
     return "General"
 
@@ -185,201 +154,14 @@ def build_votes(session, status):
     absent = SESSION_ABSENT.get(session, [])
     return {l: ("NP" if l in absent else "Y") for l in ALL_LEGS}
 
-def infer_session_from_url(url):
-    """Extract date from URL and map to session label."""
-    m = re.search(r'(\d{2})(\d{2})2026', url)
-    if m:
-        month, day = int(m.group(1)), int(m.group(2))
-        if month == 1: return "Jan 5, 2026"
-        if month == 2: return "Feb 3, 2026"
-        if month == 3: return "Mar 10, 2026"
-        if month == 4: return "Apr 21, 2026"
-        if month == 5: return "May 12, 2026"
-    return "2026"
-
-def scrape_lot_page(html, source_url):
-    """Scrape LOT index page - each link is a full PDF of resolutions for a meeting."""
-    items = []
-    # Find all 2026 PDF links
-    links = re.findall(
-        r'href="(https://www\.scnylegislature\.us/DocumentCenter/View/\d+/[^"]+)"[^>]*>\s*([^<]+)',
-        html
-    )
-    for url, name in links:
-        name = name.strip()
-        if "2026" not in name and "2026" not in url:
-            continue
-        # Extract date from link name like "03/10/2026 Laid on the Table..."
-        date_match = re.search(r'(\d{2})/(\d{2})/(\d{4})', name)
-        if date_match:
-            month, day, year = date_match.groups()
-            if year != "2026":
-                continue
-            months = ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-            session = f"{months[int(month)]} {int(day)}, {year}"
-            items.append({
-                "id": f"LOT-{month}{day}{year}",
-                "ir": f"LOT-{month}{day}",
-                "resNum": None,
-                "type": "lot",
-                "session": session,
-                "desc": f"{name.strip()} — PDF containing all resolutions laid on the table at the {session} meeting.",
-                "sponsor": "Legislature",
-                "committee": "All Committees",
-                "status": "Published",
-                "cp": None,
-                "sourceUrl": url,
-                "votes": None,
-            })
-    return items
-
-def scrape_procedural_motions(html):
-    """Scrape procedural motions page - individual PDF per motion with number in name."""
-    items = []
-    links = re.findall(
-        r'href="(https://www\.scnylegislature\.us/DocumentCenter/View/\d+/Procedural-Motion-(\d+)-2026[^"]*)"[^>]*>\s*([^<]+)',
-        html, re.IGNORECASE
-    )
-    for url, num, name in links:
-        name = name.strip()
-        ir = f"PM{num.zfill(2)}"
-        outcome = KNOWN_OUTCOMES.get(ir, KNOWN_OUTCOMES.get(num))
-        status = outcome[0] if outcome else "Filed"
-        res_num = outcome[1] if outcome else None
-        items.append({
-            "ir": ir,
-            "resNum": res_num,
-            "type": "pm",
-            "session": "2026",
-            "desc": name,
-            "sponsor": "Legislature",
-            "committee": "Ways & Means",
-            "status": status,
-            "cp": None,
-            "sourceUrl": url,
-            "votes": None,
-        })
-    return items
-
-def scrape_local_laws(html):
-    """Scrape local laws page - one consolidated PDF per year."""
-    items = []
-    links = re.findall(
-        r'href="(https://www\.scnylegislature\.us/DocumentCenter/View/\d+/2026-Local-Laws[^"]*)"[^>]*>\s*([^<]+)',
-        html, re.IGNORECASE
-    )
-    for url, name in links:
-        items.append({
-            "ir": "LL-2026",
-            "resNum": None,
-            "type": "ll",
-            "session": "2026",
-            "desc": "2026 Local Laws — Consolidated PDF of all local laws passed in 2026.",
-            "sponsor": "Legislature",
-            "committee": "General",
-            "status": "Published",
-            "cp": None,
-            "sourceUrl": url,
-            "votes": None,
-        })
-    return items
-
-def scrape_budget_amendments(html):
-    """Scrape budget amendments page."""
-    items = []
-    # Find the 2026 section - look for links after the 2026 tab
-    section_2026 = re.search(r'### 2026(.*?)###', html, re.DOTALL)
-    if not section_2026:
-        # Try to find 2026 links directly
-        section_2026_match = html
-    else:
-        section_2026_match = section_2026.group(1)
-
-    links = re.findall(
-        r'href="(https://www\.scnylegislature\.us/DocumentCenter/View/\d+/[^"]*(?:2026|Budget-Amend)[^"]*)"[^>]*>\s*([^<]+)',
-        html, re.IGNORECASE
-    )
-    seen = set()
-    for url, name in links:
-        name = name.strip()
-        if "2026" not in name and "2026" not in url:
-            continue
-        if url in seen:
-            continue
-        seen.add(url)
-        # Extract amendment number
-        num_match = re.search(r'(\d{2})-2026', name)
-        num = num_match.group(1) if num_match else "01"
-        ir = f"BA-{num}-2026"
-        items.append({
-            "ir": ir,
-            "resNum": None,
-            "type": "budget",
-            "session": "2026",
-            "desc": name,
-            "sponsor": "Co. Exec.",
-            "committee": "Budget & Finance",
-            "status": "Published",
-            "cp": None,
-            "sourceUrl": url,
-            "votes": None,
-        })
-    return items
-
-def scrape_home_rule(html):
-    """Scrape home rule messages page."""
-    items = []
-    links = re.findall(
-        r'href="(https://www\.scnylegislature\.us/DocumentCenter/View/\d+/Home-Rule[^"]*2026[^"]*)"[^>]*>\s*([^<]+)',
-        html, re.IGNORECASE
-    )
-    seen = set()
-    for url, name in links:
-        name = name.strip()
-        if url in seen:
-            continue
-        seen.add(url)
-        num_match = re.search(r'(\d{2})-2026', name)
-        num = num_match.group(1) if num_match else "01"
-        ir = f"HR-{num}-2026"
-        items.append({
-            "ir": ir,
-            "resNum": None,
-            "type": "hrl",
-            "session": "2026",
-            "desc": name,
-            "sponsor": "Legislature",
-            "committee": "General",
-            "status": "Filed",
-            "cp": None,
-            "sourceUrl": url,
-            "votes": None,
-        })
-    return items
-
-def scrape_meetings_docs(html):
-    """Scrape meetings index page for all document links."""
-    meetings = {}
-    # Find all document links with dates
-    links = re.findall(
-        r'href="(https://www\.scnylegislature\.us/DocumentCenter/View/\d+/(\d{2})(\d{2})(2026)[^"]*)"[^>]*>\s*([^<]+)',
-        html
-    )
-    for url, month, day, year, name in links:
-        name = name.strip()
-        months = ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-        session = f"{months[int(month)]} {int(day)}, {year}"
-        if session not in meetings:
-            meetings[session] = {"label": session, "type": "General Meeting", "docs": []}
-        if not any(d["url"] == url for d in meetings[session]["docs"]):
-            meetings[session]["docs"].append({"name": name, "url": url})
-    return list(meetings.values())
+def is_doc_link(url):
+    """Check if URL is a Suffolk County DocumentCenter PDF link."""
+    return "scnylegislature.us/DocumentCenter/View/" in url
 
 def run():
     data_path = Path("data/resolutions.json")
     data_path.parent.mkdir(exist_ok=True)
 
-    # Load existing data
     try:
         existing = json.loads(data_path.read_text())
         if not existing.get("resolutions"):
@@ -390,128 +172,245 @@ def run():
         existing = {"resolutions": [], "meetings": []}
 
     res_by_ir = {r["ir"]: r for r in existing.get("resolutions", [])}
-    all_meetings = existing.get("meetings", [])
+    all_meetings = {m["label"]: m for m in existing.get("meetings", [])}
     found_new = 0
-    updated = 0
 
-    # ── SCRAPE EACH SOURCE PAGE ────────────────────────────────────────────────
-    print("\n=== Scraping LOT Resolutions Index ===")
-    html = fetch_html("https://www.scnylegislature.us/661/Laid-on-the-Table-Resolutions-LOT")
+    # ── 1. PROCEDURAL MOTIONS ─────────────────────────────────────────────────
+    print("\n=== Procedural Motions ===")
+    html = fetch_html(f"{BASE}/648/Procedural-Motions")
     if html:
-        # Update meetings from LOT page
-        lot_meetings = scrape_meetings_docs(html)
-        for m in lot_meetings:
-            existing_m = next((x for x in all_meetings if x["label"] == m["label"]), None)
-            if not existing_m:
-                all_meetings.append(m)
-                print(f"  New meeting: {m['label']}")
-            else:
-                for doc in m["docs"]:
-                    if not any(d["url"] == doc["url"] for d in existing_m["docs"]):
-                        existing_m["docs"].append(doc)
+        links = get_all_links(html)
+        count = 0
+        for url, text in links:
+            # Match: "Procedural Motion 01-2026 (PDF)"
+            m = re.search(r'Procedural Motion (\d+)-2026', text, re.IGNORECASE)
+            if m and is_doc_link(url):
+                num = m.group(1).zfill(2)
+                ir = f"PM{num}"
+                outcome = KNOWN_OUTCOMES.get(ir)
+                status = outcome[0] if outcome else "Filed"
+                res_num = outcome[1] if outcome else None
+                if ir not in res_by_ir:
+                    res_by_ir[ir] = {
+                        "ir": ir, "resNum": res_num, "type": "pm",
+                        "session": "2026", "desc": f"Procedural Motion {num}-2026",
+                        "sponsor": "Legislature", "committee": "Ways & Means",
+                        "status": status, "cp": None, "sourceUrl": url,
+                        "votes": build_votes("2026", status),
+                    }
+                    found_new += 1
+                    count += 1
+        print(f"  Added {count} procedural motions")
 
-    print("\n=== Scraping Procedural Motions ===")
-    html = fetch_html("https://www.scnylegislature.us/648/Procedural-Motions")
+    # ── 2. LOT RESOLUTIONS ────────────────────────────────────────────────────
+    print("\n=== LOT Resolutions ===")
+    html = fetch_html(f"{BASE}/661/Laid-on-the-Table-Resolutions-LOT")
     if html:
-        items = scrape_procedural_motions(html)
-        print(f"  Found {len(items)} procedural motions")
-        for item in items:
-            if item["ir"] not in res_by_ir:
-                res_by_ir[item["ir"]] = item
+        links = get_all_links(html)
+        MONTHS = {"01":"Jan","02":"Feb","03":"Mar","04":"Apr","05":"May",
+                  "06":"Jun","07":"Jul","08":"Aug","09":"Sep","10":"Oct",
+                  "11":"Nov","12":"Dec"}
+        count = 0
+        for url, text in links:
+            # Match: "03/10/2026 Laid on the Table Resolutions (PDF)"
+            m = re.search(r'(\d{2})/(\d{2})/(2026)', text)
+            if m and is_doc_link(url):
+                month, day, year = m.group(1), m.group(2), m.group(3)
+                session = f"{MONTHS[month]} {int(day)}, {year}"
+                ir = f"LOT-{month}{day}{year}"
+                if ir not in res_by_ir:
+                    res_by_ir[ir] = {
+                        "ir": ir, "resNum": None, "type": "lot",
+                        "session": session,
+                        "desc": f"Laid on the Table Resolutions — {session} General Meeting. Click PDF to view all resolutions introduced at this meeting.",
+                        "sponsor": "Legislature", "committee": "All Committees",
+                        "status": "Published", "cp": None, "sourceUrl": url,
+                        "votes": None,
+                    }
+                    # Add to meetings
+                    if session not in all_meetings:
+                        all_meetings[session] = {"label": session, "type": "General Meeting", "docs": []}
+                    if not any(d["url"] == url for d in all_meetings[session]["docs"]):
+                        all_meetings[session]["docs"].append({"name": "LOT Resolutions", "url": url})
+                    found_new += 1
+                    count += 1
+        print(f"  Added {count} LOT document entries")
+
+    # ── 3. LOCAL LAWS ─────────────────────────────────────────────────────────
+    print("\n=== Local Laws ===")
+    html = fetch_html(f"{BASE}/665/Local-Laws")
+    if html:
+        links = get_all_links(html)
+        count = 0
+        for url, text in links:
+            # Match: "2026 Local Laws (PDF)"
+            if "2026" in text and "Local Laws" in text and is_doc_link(url):
+                ir = "LL-2026-INDEX"
+                if ir not in res_by_ir:
+                    res_by_ir[ir] = {
+                        "ir": ir, "resNum": None, "type": "ll",
+                        "session": "2026",
+                        "desc": "2026 Local Laws — Consolidated PDF index of all local laws passed in 2026.",
+                        "sponsor": "Legislature", "committee": "General",
+                        "status": "Published", "cp": None, "sourceUrl": url,
+                        "votes": None,
+                    }
+                    found_new += 1
+                    count += 1
+        print(f"  Added {count} local law index entries")
+
+    # ── 4. BUDGET AMENDMENTS ──────────────────────────────────────────────────
+    print("\n=== Budget Amendments ===")
+    html = fetch_html(f"{BASE}/684/Budget-Amendments")
+    if html:
+        links = get_all_links(html)
+        count = 0
+        seen_urls = set()
+        for url, text in links:
+            if not is_doc_link(url) or url in seen_urls:
+                continue
+            # Match 2026 budget amendment documents
+            if "2026" not in text and "2026" not in url:
+                continue
+            if not any(k in text.lower() for k in ["budget", "amend", "capital program"]):
+                continue
+            seen_urls.add(url)
+            # Extract number if present
+            num_m = re.search(r'(\d{2})-2026', text)
+            num = num_m.group(1) if num_m else "00"
+            ir = f"BA-{num}-2026"
+            # Make unique if duplicate number
+            while ir in res_by_ir and res_by_ir[ir]["sourceUrl"] != url:
+                num = str(int(num) + 1).zfill(2)
+                ir = f"BA-{num}-2026"
+            if ir not in res_by_ir:
+                res_by_ir[ir] = {
+                    "ir": ir, "resNum": None, "type": "budget",
+                    "session": "2026", "desc": text,
+                    "sponsor": "Co. Exec.", "committee": "Budget & Finance",
+                    "status": "Published", "cp": None, "sourceUrl": url,
+                    "votes": None,
+                }
                 found_new += 1
-            else:
-                ex = res_by_ir[item["ir"]]
-                if item["sourceUrl"] and not ex.get("sourceUrl"):
-                    ex["sourceUrl"] = item["sourceUrl"]
+                count += 1
+        print(f"  Added {count} budget amendment entries")
 
-    print("\n=== Scraping Local Laws ===")
-    html = fetch_html("https://www.scnylegislature.us/665/Local-Laws")
+    # ── 5. HOME RULE MESSAGES ─────────────────────────────────────────────────
+    print("\n=== Home Rule Messages ===")
+    html = fetch_html(f"{BASE}/205/Home-Rule-Messages")
     if html:
-        items = scrape_local_laws(html)
-        print(f"  Found {len(items)} local law documents")
-        for item in items:
-            if item["ir"] not in res_by_ir:
-                res_by_ir[item["ir"]] = item
-                found_new += 1
+        links = get_all_links(html)
+        count = 0
+        for url, text in links:
+            # Match: "Home Rule 01-2026 (PDF)"
+            m = re.search(r'Home Rule[^\d]*(\d+)-2026', text, re.IGNORECASE)
+            if m and is_doc_link(url):
+                num = m.group(1).zfill(2)
+                ir = f"HR-{num}-2026"
+                if ir not in res_by_ir:
+                    res_by_ir[ir] = {
+                        "ir": ir, "resNum": None, "type": "hrl",
+                        "session": "2026", "desc": text,
+                        "sponsor": "Legislature", "committee": "General",
+                        "status": "Filed", "cp": None, "sourceUrl": url,
+                        "votes": None,
+                    }
+                    found_new += 1
+                    count += 1
+        print(f"  Added {count} home rule messages")
 
-    print("\n=== Scraping Budget Amendments ===")
-    html = fetch_html("https://www.scnylegislature.us/684/Budget-Amendments")
-    if html:
-        items = scrape_budget_amendments(html)
-        print(f"  Found {len(items)} budget amendments")
-        for item in items:
-            if item["ir"] not in res_by_ir:
-                res_by_ir[item["ir"]] = item
-                found_new += 1
+    # ── 6. MEETINGS INDEX ─────────────────────────────────────────────────────
+    print("\n=== Meeting Documents ===")
+    for page_url in [
+        f"{BASE}/765/General-Meetings-Agendas-Minutes",
+        f"{BASE}/661/Laid-on-the-Table-Resolutions-LOT",
+    ]:
+        html = fetch_html(page_url)
+        if not html:
+            continue
+        links = get_all_links(html)
+        MONTHS = {"01":"Jan","02":"Feb","03":"Mar","04":"Apr","05":"May",
+                  "06":"Jun","07":"Jul","08":"Aug","09":"Sep","10":"Oct",
+                  "11":"Nov","12":"Dec"}
+        DOC_NAMES = {
+            "laid-on-the-table": "LOT Resolutions",
+            "marked-agenda": "Marked Agenda",
+            "minutes": "Minutes",
+            "action-report": "Action Report",
+            "resolution-packet": "Resolution Packet",
+            "notice": "Notice",
+        }
+        for url, text in links:
+            if not is_doc_link(url):
+                continue
+            url_lower = url.lower()
+            if "2026" not in url_lower:
+                continue
+            # Extract date from URL
+            date_m = re.search(r'(\d{2})(\d{2})(2026)', url_lower)
+            if not date_m:
+                continue
+            month, day, year = date_m.group(1), date_m.group(2), date_m.group(3)
+            if month not in MONTHS:
+                continue
+            session = f"{MONTHS[month]} {int(day)}, {year}"
+            # Determine doc type
+            doc_name = text.strip() or "Document"
+            for key, name in DOC_NAMES.items():
+                if key in url_lower:
+                    doc_name = name
+                    break
+            # Add to meetings
+            if session not in all_meetings:
+                all_meetings[session] = {"label": session, "type": "General Meeting", "docs": []}
+            if not any(d["url"] == url for d in all_meetings[session]["docs"]):
+                all_meetings[session]["docs"].append({"name": doc_name, "url": url})
 
-    print("\n=== Scraping Home Rule Messages ===")
-    html = fetch_html("https://www.scnylegislature.us/205/Home-Rule-Messages")
-    if html:
-        items = scrape_home_rule(html)
-        print(f"  Found {len(items)} home rule messages")
-        for item in items:
-            if item["ir"] not in res_by_ir:
-                res_by_ir[item["ir"]] = item
-                found_new += 1
-
-    print("\n=== Scraping Meetings Index ===")
-    html = fetch_html("https://www.scnylegislature.us/765/General-Meetings-Agendas-Minutes")
-    if html:
-        meetings_from_page = scrape_meetings_docs(html)
-        for m in meetings_from_page:
-            existing_m = next((x for x in all_meetings if x["label"] == m["label"]), None)
-            if not existing_m:
-                all_meetings.append(m)
-                print(f"  New meeting: {m['label']}")
-            else:
-                for doc in m["docs"]:
-                    if not any(d["url"] == doc["url"] for d in existing_m["docs"]):
-                        existing_m["docs"].append(doc)
-                        print(f"  New doc for {m['label']}: {doc['name']}")
-
-    # ── APPLY KNOWN VOTE OUTCOMES TO EXISTING RESOLUTIONS ─────────────────────
+    # ── 7. APPLY KNOWN VOTE OUTCOMES ──────────────────────────────────────────
     print("\n=== Applying Known Vote Outcomes ===")
+    updated = 0
     for ir, (status, res_num) in KNOWN_OUTCOMES.items():
         if ir in res_by_ir:
             ex = res_by_ir[ir]
-            if ex.get("status","Pending") == "Pending" and status != "Pending":
+            if ex.get("status","Pending") == "Pending":
                 ex["status"] = status
-                ex["resNum"] = res_num or ex.get("resNum")
+                if res_num:
+                    ex["resNum"] = res_num
                 ex["votes"] = build_votes(ex.get("session","2026"), status)
                 updated += 1
 
-    # ── SORT AND SAVE ──────────────────────────────────────────────────────────
-    type_order = ["pm","lot","ll","budget","hrl","meeting"]
+    # ── 8. SORT AND SAVE ──────────────────────────────────────────────────────
+    type_order = {"pm":0,"lot":1,"ll":2,"budget":3,"hrl":4}
     session_order = ["Jan 5, 2026","Feb 3, 2026","Mar 10, 2026",
                      "Apr 21, 2026","May 12, 2026","2026"]
 
     def sort_key(r):
         try: si = session_order.index(r.get("session","2026"))
         except ValueError: si = 99
-        try: ti = type_order.index(r.get("type","lot"))
-        except ValueError: ti = 99
+        ti = type_order.get(r.get("type","lot"), 5)
         ir = r.get("ir","")
         n = int(re.sub(r'\D','',ir) or 0)
         return (si, ti, n)
 
     all_res = sorted(res_by_ir.values(), key=sort_key)
 
-    # Sort meetings by date
-    months_order = {"Jan":1,"Feb":2,"Mar":3,"Apr":4,"May":5,"Jun":6,
-                    "Jul":7,"Aug":8,"Sep":9,"Oct":10,"Nov":11,"Dec":12}
-    def meeting_sort(m):
+    # Sort meetings newest first
+    MONTH_NUM = {"Jan":1,"Feb":2,"Mar":3,"Apr":4,"May":5,"Jun":6,
+                 "Jul":7,"Aug":8,"Sep":9,"Oct":10,"Nov":11,"Dec":12}
+    def meet_sort(m):
         parts = m["label"].split()
-        try: return (int(parts[2]), months_order.get(parts[0],0), int(parts[1].rstrip(',')))
-        except: return (9999,0,0)
+        try: return (int(parts[2]), MONTH_NUM.get(parts[0],0), int(parts[1].rstrip(',')))
+        except: return (0,0,0)
 
-    all_meetings.sort(key=meeting_sort, reverse=True)
+    meetings_list = sorted(all_meetings.values(), key=meet_sort, reverse=True)
 
-    print(f"\nFinal: {len(all_res)} items ({found_new} new, {updated} updated)")
+    print(f"\nTotal: {len(all_res)} items ({found_new} new, {updated} vote outcomes applied)")
+    print(f"Meetings: {len(meetings_list)}")
 
     output = {
         "lastUpdated": datetime.now(timezone.utc).isoformat(),
         "totalResolutions": len(all_res),
-        "meetings": all_meetings,
+        "meetings": meetings_list,
         "resolutions": all_res,
     }
     data_path.write_text(json.dumps(output, indent=2))
